@@ -9,7 +9,7 @@ public class Recorder {
     RecorderPropertiesBuilder props = new RecorderPropertiesBuilder()
       .simulationsFolder(IDEPathHelper.mavenSourcesDirectory.toString())
       .resourcesFolder(IDEPathHelper.mavenResourcesDirectory.toString())
-      .simulationPackage("computerdatabase")
+      .simulationPackage("videogamedb")
       .simulationFormatJava();
 
     GatlingRecorder.fromMap(props.build(), Option.<Path> apply(IDEPathHelper.recorderConfigFile));
