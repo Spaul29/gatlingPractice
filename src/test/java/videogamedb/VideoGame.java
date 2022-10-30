@@ -17,7 +17,7 @@ public class VideoGame extends Simulation {
 
         int userCount = Integer.parseInt(System.getProperty("userCount","5"));
         Duration rampDuration = Duration.ofSeconds(Integer.parseInt(System.getProperty("rampDuration","60")));
-        Duration maxDuration = Duration.ofSeconds(Integer.parseInt(System.getProperty("maxDuration","30")));
+        Duration maxDuration = Duration.ofSeconds(Integer.parseInt(System.getProperty("maxDuration","40")));
 
         HttpProtocolBuilder httpProtocol = http
                 .baseUrl("https://videogamedb.uk")
