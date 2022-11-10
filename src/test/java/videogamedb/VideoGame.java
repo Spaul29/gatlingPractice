@@ -1,7 +1,6 @@
 package videogamedb;
 
 import java.time.Duration;
-import java.util.*;
 
 import io.gatling.javaapi.core.*;
 import io.gatling.javaapi.http.*;
@@ -24,58 +23,21 @@ public class VideoGame extends Simulation {
                 .acceptHeader("application/json")
                 .contentTypeHeader("application/json");
 
-        Map<CharSequence, String> authenticationHeader = new HashMap<>();
-        authenticationHeader.put("authorization", "Bearer #{jwt}");
-
-        FeederBuilder<String> existingGamesDataFeeder = csv("testdata/existingGamesData.csv").circular();
-        FeederBuilder<String> newGamesDataFeeder = csv("testdata/newGamesData.csv").circular();
-
-        ChainBuilder authenticate = exec(http("Authentication request")
-                .post("/api/authenticate")
-                .body(RawFileBody("inputdata/authenticate.json"))
-                .check(status().is(200))
-                .check(jsonPath("$.token").saveAs("jwt")));
-
-        ChainBuilder listAllGames = exec(http("List all video games")
-                .get("/api/videogame")
-                .check(jsonPath("$[0].name").is("Resident Evil 4")));
-
-        ChainBuilder listSpecificGame = feed(existingGamesDataFeeder)
-                .exec( http("List a video game with id - #{id}")
-                .get("/api/videogame/#{id}")
-                .check(jsonPath("$.name").isEL("#{name}")));
-
-        ChainBuilder createNewGame = feed(newGamesDataFeeder)
-                .exec(http("Create video game #{name}")
-                .post("/api/videogame")
-                .headers(authenticationHeader)
-                .body(ElFileBody("inputdata/createGame.json"))
-                .check(jsonPath("$.name").isEL("#{name}"))
-                .check(jsonPath("$.reviewScore").isEL("#{reviewScore}")));
-
-        ChainBuilder updateGame = exec(http("Update a video game")
-                .put("/api/videogame/10")
-                .headers(authenticationHeader)
-                .body(RawFileBody("inputdata/updateGame.json"))
-                .check(jsonPath("$.name").is("Marco")));
-
-        ChainBuilder deleteGame = exec(http("Delete a video game")
-                .delete("/api/videogame/1")
-                .headers(authenticationHeader)
-                .check(substring("Video game deleted")));
+        ChainBuilder initializeSession = exec(session -> session.set("authenticated",false));
 
         ScenarioBuilder scn = scenario("Video Game DB")
-                .exec(listAllGames)
+                .exec(initializeSession)
+                .exec(SearchGames.listAllGames)
                 .pause(minPause,maxPause)
-                .repeat(10).on(exec(listSpecificGame))
+                .repeat(10).on(exec(SearchGames.listSpecificGame))
                 .pause(minPause,maxPause)
-                .exec(authenticate)
+                .exec(Authentication.authenticate)
                 .pause(minPause,maxPause)
-                .repeat(4).on(exec(createNewGame))
+                .repeat(4).on(exec(ModifyGames.createNewGame))
                 .pause(minPause,maxPause)
-                .exec(updateGame)
+                .exec(ModifyGames.updateGame)
                 .pause(minPause,maxPause)
-                .exec(deleteGame);
+                .exec(ModifyGames.deleteGame);
 
         setUp(scn.injectOpen(rampUsers(userCount).during(rampDuration)))
                 .maxDuration(maxDuration).protocols(httpProtocol);
